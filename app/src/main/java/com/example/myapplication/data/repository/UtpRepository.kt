@@ -8,12 +8,22 @@ import com.example.myapplication.data.model.ObjetivoAprendizaje
 import com.example.myapplication.data.model.PreguntaPrueba
 import com.example.myapplication.data.model.PruebaFinal
 import com.example.myapplication.data.model.UnidadPedagogica
+import com.example.myapplication.data.remote.ApiClient
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 object UtpRepository {
+
+    // Scope para enviar cambios al servidor en segundo plano
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // --- BASE DE DATOS EN MEMORIA (1° BÁSICO) ---
     private val unidadesLista = mutableListOf(
@@ -297,6 +307,7 @@ object UtpRepository {
 
             registrarLog(unidadId, nuevoEstado.name, detalleLog)
             notificarCambios()
+            enviarCambioEstado(unidadId, nuevoEstado, observaciones)
         }
     }
 
@@ -318,6 +329,61 @@ object UtpRepository {
         _historialState.value = historialLista.toList()
     }
     fun agregarUnidad(nuevaUnidad: UnidadPedagogica) {
-        _unidadesState.value = _unidadesState.value + nuevaUnidad
+        unidadesLista.add(nuevaUnidad)
+        notificarCambios()
+        scope.launch {
+            try {
+                ApiClient.crearUnidad(nuevaUnidad)
+                sincronizarConServidor()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Sin conexión: la unidad queda solo en memoria hasta la próxima sincronización
+            }
+        }
+    }
+
+    // --- SINCRONIZACIÓN CON EL BACKEND SPRING BOOT ---
+
+    // Las unidades del servidor se identifican como "u<id>"; las creadas solo en la app no tienen ese formato
+    private fun idRemoto(id: String): Long? =
+        if (id.startsWith("u")) id.removePrefix("u").toLongOrNull() else null
+
+    private fun enviarCambioEstado(unidadId: String, estado: EstadoContenido, observaciones: String?) {
+        val remoto = idRemoto(unidadId) ?: return
+        scope.launch {
+            try {
+                ApiClient.cambiarEstado(remoto, estado, observaciones)
+                sincronizarConServidor()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Sin conexión: se mantiene el cambio local
+            }
+        }
+    }
+
+    /**
+     * Reemplaza unidades e historial locales por los del servidor.
+     * Devuelve false (y deja los datos locales intactos) si no hay conexión.
+     * Los objetivos de aprendizaje, actividades y pruebas siguen siendo locales.
+     */
+    suspend fun sincronizarConServidor(): Boolean {
+        return try {
+            val unidades = ApiClient.getUnidades()
+            val historial = ApiClient.getHistorial()
+            withContext(Dispatchers.Main) {
+                unidadesLista.clear()
+                unidadesLista.addAll(unidades)
+                historialLista.clear()
+                historialLista.addAll(historial)
+                notificarCambios()
+            }
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            false
+        }
     }
 }

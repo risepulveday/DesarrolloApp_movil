@@ -27,7 +27,7 @@ Queda en `http://localhost:8080`. La base H2 se guarda en `backend/data/` y se l
 | GET | `/api/unidades?asignatura=&estado=` | Lista de unidades (filtros opcionales) |
 | GET | `/api/unidades/{id}` | Una unidad |
 | POST | `/api/unidades` | Crear unidad |
-| PATCH | `/api/unidades/{id}/estado` | `{ "estado", "observaciones", "usuario" }` — cambia estado y registra auditoría |
+| PATCH o PUT | `/api/unidades/{id}/estado` | `{ "estado", "observaciones", "usuario" }` — cambia estado y registra auditoría (la app usa PUT) |
 | GET | `/api/historial?entidadId=` | Historial de cambios |
 
 Usuarios de prueba (clave `123456`): `alumno@utp.edu`, `docente@utp.edu`, `jefatura@utp.edu`.
@@ -38,11 +38,15 @@ curl -X POST localhost:8080/api/auth/login -H 'Content-Type: application/json' \
   -d '{"email":"docente@utp.edu","password":"123456"}'
 ```
 
-## Conectar la app Android (pendiente)
-1. En `AndroidManifest.xml`: agregar `<uses-permission android:name="android.permission.INTERNET" />` y, solo en desarrollo, `android:usesCleartextTraffic="true"` en `<application>`.
-2. Desde el emulador, el servidor de tu PC es `http://10.0.2.2:8080/` (no `localhost`). En un celular físico usa la IP de tu PC en la red local.
-3. Agregar Retrofit (o Ktor client) en `libs.versions.toml` y reemplazar las llamadas a `UTPDatabaseHelper` / `UtpRepository` por llamadas a estos endpoints.
+## Conexión con la app Android
+La app ya llama a este backend (`app/.../data/remote/ApiClient.kt`):
+- **Login:** `LoginScreen` valida contra `/api/auth/login` (ya no usa `UTPDatabaseHelper`).
+- **Unidades e historial:** `UtpRepository` los carga del servidor al iniciar sesión, y envía al servidor las aprobaciones/rechazos y las publicaciones nuevas. Si no hay conexión, queda el cambio local.
+- **Dirección del servidor:** `ApiConfig.BASE_URL` (por defecto `http://10.0.2.2:8080`, el PC visto desde el emulador). En un celular físico usa la IP de tu PC y agrégala también en `app/src/main/res/xml/network_security_config.xml`.
+
+Para probar: levanta el backend (`./gradlew bootRun` en `backend/`), luego corre la app en el emulador e ingresa con `jefatura@utp.edu` / `123456`.
 
 ## Limitaciones actuales
 - No hay token/JWT: el login valida credenciales pero el resto de endpoints no está protegido.
 - Solo están las unidades, el historial, tareas, clases y usuarios. Objetivos de aprendizaje, actividades y pruebas finales siguen solo en la app.
+- Editar una unidad ya existente (`guardarOActualizarUnidad`) aún no se envía al servidor; tareas y clases tienen endpoint pero la app todavía no las muestra desde ahí.
