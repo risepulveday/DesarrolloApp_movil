@@ -27,12 +27,11 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.myapplication.data.UTPDatabaseHelper
+import com.example.myapplication.data.remote.ApiClient
+import com.example.myapplication.data.repository.UtpRepository
 import com.example.myapplication.ui.components.DbStatusBadge
 import com.example.myapplication.ui.theme.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +39,6 @@ fun LoginScreen(
     onLoginSuccess: (String) -> Unit
 ) {
     val context = LocalContext.current
-    val dbHelper = remember { UTPDatabaseHelper(context) }
     val coroutineScope = rememberCoroutineScope()
 
     var email by remember { mutableStateOf("") }
@@ -207,12 +205,18 @@ fun LoginScreen(
                             errorMessage = null
 
                             coroutineScope.launch {
-                                val role = withContext(Dispatchers.IO) {
-                                    dbHelper.validarUsuario(email, password)
+                                val role = try {
+                                    ApiClient.login(email, password)
+                                } catch (e: Exception) {
+                                    isLoading = false
+                                    errorMessage = "No se pudo conectar con el servidor. Verifica que esté encendido."
+                                    return@launch
                                 }
                                 isLoading = false
 
                                 if (role != null) {
+                                    // Trae unidades e historial del servidor (si falla, se usan los datos locales)
+                                    UtpRepository.sincronizarConServidor()
                                     Toast.makeText(
                                         context,
                                         "¡Bienvenido/a al Portal Escuela Marcela Paz!",
