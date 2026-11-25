@@ -38,6 +38,11 @@ curl -X POST localhost:8080/api/auth/login -H 'Content-Type: application/json' \
   -d '{"email":"docente@utp.edu","password":"123456"}'
 ```
 
+## Probar con Postman
+1. Levanta el backend (`./gradlew bootRun`).
+2. En Postman: **Import** → `backend/postman/UTP-Backend.postman_collection.json`.
+3. La colección usa la variable `baseUrl` (`http://localhost:8080`). Ejecuta primero un *Login* y luego cualquier otra petición; no hace falta token.
+
 ## Conexión con la app Android
 La app ya llama a este backend (`app/.../data/remote/ApiClient.kt`):
 - **Login:** `LoginScreen` valida contra `/api/auth/login` (ya no usa `UTPDatabaseHelper`).
