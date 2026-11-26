@@ -189,9 +189,22 @@ fun ReviewPublishScreen(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+                item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
+
+        // Mismo botón flotante que el docente, pero para publicar (en el editor se elige la asignatura)
+        ExtendedFloatingActionButton(
+            onClick = { onEditUnit() },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 20.dp, end = 16.dp),
+            containerColor = UtpPurplePrimary,
+            contentColor = Color.White,
+            shape = RoundedCornerShape(16.dp),
+            icon = { Icon(Icons.Default.Add, contentDescription = "Publicar") },
+            text = { Text("Publicar Unidad", fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+        )
 
         // --- VENTANA EMERGENTE DE DETALLES ---
         unidadSeleccionadaModal?.let { unidad ->
