@@ -95,7 +95,7 @@ fun MainScreen(
             currentRoute == "student_search" ||
             currentRoute == "teacher_request" ||
             currentRoute == "student_practice" ||
-            currentRoute == "student_quiz"
+            currentRoute?.startsWith("student_quiz") == true
 
     Scaffold(
         bottomBar = {
@@ -280,9 +280,9 @@ fun MainScreen(
             }
 
             composable(NavTabItem.StudentContenido.route) {
-                StudentUnitDetailScreen(
+                StudentMaterialScreen(
                     onBack = { navController.popBackStack() },
-                    onStartQuiz = { navController.navigate("student_quiz") },
+                    onStartQuiz = { id -> navController.navigate("student_quiz/$id") },
                     onLogout = onLogout
                 )
             }
@@ -304,19 +304,17 @@ fun MainScreen(
             // --- VISTAS SECUNDARIAS ALUMNO ---
             composable("student_practice") {
                 StudentPracticeScreen(
-                    onComplete = { navController.navigate("student_quiz") },
+                    onComplete = { navController.popBackStack() },
                     onBack = { navController.popBackStack() }
                 )
             }
 
-            composable("student_quiz") {
-                StudentQuizScreen(
+            composable("student_quiz/{unidadId}") { entry ->
+                val unidadId = entry.arguments?.getString("unidadId")?.toLongOrNull() ?: 0L
+                StudentEvaluacionScreen(
+                    unidadId = unidadId,
                     onBack = { navController.popBackStack() },
-                    onFinishQuiz = {
-                        navController.navigate(NavTabItem.StudentInicio.route) {
-                            popUpTo(NavTabItem.StudentInicio.route) { inclusive = true }
-                        }
-                    }
+                    onLogout = onLogout
                 )
             }
         }

@@ -1,57 +1,72 @@
 # Backend Spring Boot (UTP)
 
-API REST en Kotlin + Spring Boot que reemplaza los datos locales de la app (SQLite en `UTPDatabaseHelper` y listas en memoria en `UtpRepository`).
-
-Es un proyecto Gradle **independiente** de la app Android: no está incluido en el `settings.gradle.kts` raíz, para no mezclar el plugin de Spring Boot con el de Android.
+API REST en Kotlin + Spring Boot 4, con **MySQL**, autenticación **JWT** y roles (ALUMNO, DOCENTE, JEFATURA). Es un proyecto Gradle independiente de la app Android.
 
 ## Requisitos
-- JDK 17 o superior (Spring Boot 4 no corre con Java 11).
+- JDK 17 o superior.
+- MySQL 8 corriendo en `localhost:3306` (XAMPP, MySQL Workbench o Docker).
+
+## Base de datos
+El backend crea la base `utp_db` y las tablas solas (`createDatabaseIfNotExist` + `ddl-auto=update`) y la llena con datos de prueba. Solo necesitas un usuario con permisos. Variables de entorno (todas opcionales):
+
+| Variable | Por defecto |
+|---|---|
+| `DB_HOST` / `DB_PORT` / `DB_NAME` | `localhost` / `3306` / `utp_db` |
+| `DB_USER` / `DB_PASSWORD` | `root` / (vacía) |
+| `JWT_SECRET` | clave de desarrollo (cámbiala fuera de clase) |
+| `STORAGE_DIR` | `./uploads` (aquí se guardan los archivos subidos) |
+
+Ejemplo (Windows PowerShell): `$env:DB_PASSWORD="mi_clave"; ./gradlew bootRun`
 
 ## Ejecutar
-Abre la carpeta `backend/` como proyecto aparte en IntelliJ IDEA / Android Studio, o desde terminal:
-
 ```bash
 cd backend
 ./gradlew bootRun        # Windows: gradlew.bat bootRun
 ```
+Queda en `http://localhost:8080`. Los tests usan H2 en memoria (no necesitan MySQL).
 
-Queda en `http://localhost:8080`. La base H2 se guarda en `backend/data/` y se llena sola con los mismos datos de prueba de la app. Consola de BD: `http://localhost:8080/h2-console` (JDBC URL `jdbc:h2:file:./data/utpdb`, usuario `sa`, sin contraseña).
+## Usuarios de prueba (clave `123456`)
+`alumno@utp.edu` (ALUMNO) · `docente@utp.edu` (DOCENTE) · `jefatura@utp.edu` (JEFATURA / Jefe UTP)
+
+## Seguridad
+`POST /api/auth/login` devuelve `{ id, nombre, email, rol, token, expiraEn }`. El resto de la API exige `Authorization: Bearer <token>` (sin token → 401, rol insuficiente → 403). El token dura 12 h.
 
 ## Endpoints
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| POST | `/api/auth/login` | `{ "email", "password" }` → `{ id, nombre, email, rol }` (401 si es inválido) |
-| GET | `/api/tareas` | Tareas del alumno |
-| GET | `/api/clases` | Clases del docente |
-| GET | `/api/unidades?asignatura=&estado=` | Lista de unidades (filtros opcionales) |
-| GET | `/api/unidades/{id}` | Una unidad |
-| POST | `/api/unidades` | Crear unidad |
-| PATCH o PUT | `/api/unidades/{id}/estado` | `{ "estado", "observaciones", "usuario" }` — cambia estado y registra auditoría (la app usa PUT) |
-| GET | `/api/historial?entidadId=` | Historial de cambios |
+| Método | Ruta | Rol | Descripción |
+|---|---|---|---|
+| POST | `/api/auth/login` | público | Inicia sesión |
+| GET | `/api/unidades` , `/api/unidades/{id}` | cualquiera | Unidades |
+| POST | `/api/unidades` | DOCENTE, JEFATURA | Crear unidad |
+| PUT/PATCH | `/api/unidades/{id}/estado` | JEFATURA | Aprobar / rechazar unidad |
+| GET | `/api/recursos?estado=` | cualquiera | Alumno: solo autorizados · Docente: los suyos · Jefatura: todos |
+| POST | `/api/recursos` (multipart: `titulo`, `descripcion`, `asignatura`, `unidadId`, `archivo`) | DOCENTE, JEFATURA | Subir material (máx. 50 MB). Docente → PENDIENTE; Jefatura → APROBADO |
+| PUT/PATCH | `/api/recursos/{id}/estado` | JEFATURA | Autorizar (`APROBADO`) o rechazar (`RECHAZADO`) con observaciones |
+| GET | `/api/recursos/{id}/archivo` | según permiso | Descarga del archivo |
+| GET | `/api/progreso/mio` | ALUMNO | Avance (%) |
+| POST | `/api/progreso/recursos/{id}` | ALUMNO | Marca un material como visto |
+| GET | `/api/progreso/alumnos` | DOCENTE, JEFATURA | Avance de todos los alumnos |
+| GET | `/api/evaluaciones/{unidadId}/preguntas` | cualquiera | Preguntas (sin la respuesta correcta) |
+| POST | `/api/unidades/{unidadId}/preguntas` | DOCENTE, JEFATURA | Crear pregunta |
+| POST | `/api/evaluaciones/{unidadId}/responder` | ALUMNO | `{ respuestas:[{preguntaId, opcion}] }` → puntaje |
+| GET | `/api/evaluaciones/mis-resultados` | ALUMNO | Resultados del alumno |
+| GET | `/api/tareas`, `/api/clases`, `/api/historial` | cualquiera | Panel e historial |
 
-Usuarios de prueba (clave `123456`): `alumno@utp.edu`, `docente@utp.edu`, `jefatura@utp.edu`.
-
-Prueba rápida:
-```bash
-curl -X POST localhost:8080/api/auth/login -H 'Content-Type: application/json' \
-  -d '{"email":"docente@utp.edu","password":"123456"}'
-```
+**Avance** = (materiales vistos + evaluaciones rendidas) / (materiales autorizados + unidades con evaluación).
 
 ## Probar con Postman
-1. Levanta el backend (`./gradlew bootRun`).
-2. En Postman: **Import** → `backend/postman/UTP-Backend.postman_collection.json`.
-3. La colección usa la variable `baseUrl` (`http://localhost:8080`). Ejecuta primero un *Login* y luego cualquier otra petición; no hace falta token.
+1. Levanta el backend.
+2. **Import** → `backend/postman/UTP-Backend.postman_collection.json`.
+3. En la carpeta *1. Autenticación* ejecuta los tres logins: cada uno guarda su token (`tokenAlumno`, `tokenDocente`, `tokenJefatura`).
+4. En *Subir material* elige un archivo en el campo `archivo`. Luego prueba autorizar (Jefatura) y listar/descargar (Alumno). Las peticiones marcadas "espera 403/401" comprueban la seguridad.
 
-## Conexión con la app Android
-La app ya llama a este backend (`app/.../data/remote/ApiClient.kt`):
-- **Login:** `LoginScreen` valida contra `/api/auth/login` (ya no usa `UTPDatabaseHelper`).
-- **Unidades e historial:** `UtpRepository` los carga del servidor al iniciar sesión, y envía al servidor las aprobaciones/rechazos y las publicaciones nuevas. Si no hay conexión, queda el cambio local.
-- **Dirección del servidor:** `ApiConfig.BASE_URL` (por defecto `http://10.0.2.2:8080`, el PC visto desde el emulador). En un celular físico usa la IP de tu PC y agrégala también en `app/src/main/res/xml/network_security_config.xml`.
+## App Android
+`ApiClient.kt` consume esta API (`ApiConfig.BASE_URL`, por defecto `http://10.0.2.2:8080` para el emulador; en celular físico usa la IP del PC y agrégala a `res/xml/network_security_config.xml`).
+- **Navegación segura:** la sesión (token + rol) se guarda; cada ruta valida el rol y si el token vence o el servidor responde 401 se vuelve al login.
+- **Docente / Jefe UTP:** panel "Material" para subir archivos; Jefatura autoriza o rechaza.
+- **Estudiante:** pantalla Contenido con barra de avance, descarga de material al teléfono (se abre sin internet) y evaluaciones.
 
-Para probar: levanta el backend (`./gradlew bootRun` en `backend/`), luego corre la app en el emulador e ingresa con `jefatura@utp.edu` / `123456`.
-
-## Limitaciones actuales
-- No hay token/JWT: el login valida credenciales pero el resto de endpoints no está protegido.
-- Solo están las unidades, el historial, tareas, clases y usuarios. Objetivos de aprendizaje, actividades y pruebas finales siguen solo en la app.
-- Editar una unidad ya existente (`guardarOActualizarUnidad`) aún no se envía al servidor; tareas y clases tienen endpoint pero la app todavía no las muestra desde ahí.
+## Limitaciones
+- Objetivos de aprendizaje, actividades y pruebas finales siguen solo en la app.
+- Sin conexión el alumno ve y abre lo descargado, pero avance y evaluaciones requieren servidor.
+- Los archivos subidos quedan en disco (`STORAGE_DIR`), no dentro de MySQL (solo sus datos).
