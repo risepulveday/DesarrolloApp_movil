@@ -26,8 +26,8 @@ data class Actor(val id: Long, val nombre: String, val rol: Rol)
 
 fun Jwt.actor() = Actor(
     id = (claims["uid"] as Number).toLong(),
-    nombre = getClaimAsString("nombre"),
-    rol = Rol.valueOf(getClaimAsString("rol"))
+    nombre = getClaimAsString("nombre") ?: "",
+    rol = Rol.valueOf(getClaimAsString("rol") ?: "ALUMNO")
 )
 
 // Estados en que el material ya es visible para los estudiantes
