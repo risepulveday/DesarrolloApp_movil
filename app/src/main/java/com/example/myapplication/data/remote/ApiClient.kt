@@ -21,10 +21,10 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object ApiConfig {
-    // 10.0.2.2 es el PC anfitrión visto desde el emulador de Android Studio.
+    // localhost es el PC anfitrión visto desde el emulador de Android Studio.
     // En un celular físico, cambiar por la IP de tu PC en la red local (ej. "http://192.168.1.50:8080")
     // y agregarla también en res/xml/network_security_config.xml.
-    const val BASE_URL = "http://10.0.2.2:8080"
+    const val BASE_URL = "http://localhost:8080"
 }
 
 class ApiException(val code: Int, message: String) : IOException(message)
