@@ -26,12 +26,16 @@ fun StudentHomeScreen(
     repository: StudentRepository = remember { StudentRepository() }
 ) {
     val asignaturas = remember { repository.getAsignaturas() }
+    var avance by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        try { avance = com.example.myapplication.data.remote.ApiClient.miProgreso().porcentaje } catch (e: Exception) { }
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(UtpWarmBackground)) {
         Column(modifier = Modifier.fillMaxSize()) {
             UtpTopHeaderBar(
                 userRole = "ALUMNO",
-                userName = "Camila Morales (1° A)",
+                userName = com.example.myapplication.data.remote.Session.nombre,
                 showBack = false,
                 onLogout = onLogout
             )
@@ -100,14 +104,14 @@ fun StudentHomeScreen(
                             Spacer(modifier = Modifier.height(14.dp))
 
                             Text(
-                                text = "Mi Avance General",
+                                text = "Mi Avance General: $avance%",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White.copy(alpha = 0.8f)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             LinearProgressIndicator(
-                                progress = { 0.8f },
+                                progress = { avance / 100f },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(6.dp),

@@ -128,3 +128,119 @@ class Historial(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null
 )
+
+// Material pedagógico subido por docentes o jefatura. El archivo está en disco; aquí queda su registro.
+@Entity
+@Table(name = "recursos")
+class Recurso(
+    @Column(nullable = false)
+    var titulo: String,
+
+    @Column(length = 1000)
+    var descripcion: String? = null,
+
+    @Enumerated(EnumType.STRING)
+    var asignatura: AsignaturaUTP? = null,
+
+    var unidadId: Long? = null,
+
+    @Column(nullable = false)
+    var nombreArchivo: String,
+
+    @Column(nullable = false)
+    var contentType: String,
+
+    @Column(nullable = false)
+    var tamano: Long,
+
+    // Nombre con el que el archivo quedó guardado en disco (UUID), distinto del nombre original
+    @Column(nullable = false)
+    var archivoGuardado: String,
+
+    @Column(nullable = false)
+    var subidoPorId: Long,
+
+    @Column(nullable = false)
+    var subidoPorNombre: String,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var estado: EstadoContenido = EstadoContenido.PENDIENTE,
+
+    @Column(length = 1000)
+    var observaciones: String? = null,
+
+    @Column(nullable = false)
+    var timestamp: Long = System.currentTimeMillis(),
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null
+)
+
+// Recurso que un estudiante ya abrió o completó (alimenta la barra de avance)
+@Entity
+@Table(name = "progreso_recurso")
+class ProgresoRecurso(
+    @Column(nullable = false)
+    var usuarioId: Long,
+
+    @Column(nullable = false)
+    var recursoId: Long,
+
+    @Column(nullable = false)
+    var timestamp: Long = System.currentTimeMillis(),
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null
+)
+
+// Pregunta de alternativas de la evaluación de una unidad
+@Entity
+@Table(name = "preguntas")
+class Pregunta(
+    @Column(nullable = false)
+    var unidadId: Long,
+
+    @Column(nullable = false, length = 1000)
+    var enunciado: String,
+
+    @jakarta.persistence.ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
+    @jakarta.persistence.CollectionTable(name = "pregunta_opciones")
+    @jakarta.persistence.OrderColumn(name = "orden")
+    @Column(name = "opcion", nullable = false)
+    var opciones: MutableList<String> = mutableListOf(),
+
+    // Posición (desde 0) de la opción correcta
+    @Column(nullable = false)
+    var correcta: Int = 0,
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null
+)
+
+// Resultado de un intento de evaluación de un estudiante
+@Entity
+@Table(name = "resultados")
+class Resultado(
+    @Column(nullable = false)
+    var usuarioId: Long,
+
+    @Column(nullable = false)
+    var unidadId: Long,
+
+    @Column(nullable = false)
+    var puntaje: Int,
+
+    @Column(nullable = false)
+    var total: Int,
+
+    @Column(nullable = false)
+    var timestamp: Long = System.currentTimeMillis(),
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null
+)

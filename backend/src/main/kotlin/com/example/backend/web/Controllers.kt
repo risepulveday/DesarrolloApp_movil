@@ -5,6 +5,7 @@ import com.example.backend.domain.ClaseRepository
 import com.example.backend.domain.EstadoContenido
 import com.example.backend.domain.TareaRepository
 import com.example.backend.domain.UsuarioRepository
+import com.example.backend.service.TokenService
 import com.example.backend.service.UnidadService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -24,7 +25,8 @@ import org.springframework.web.server.ResponseStatusException
 @RequestMapping("/api/auth")
 class AuthController(
     private val usuarios: UsuarioRepository,
-    private val encoder: PasswordEncoder
+    private val encoder: PasswordEncoder,
+    private val tokens: TokenService
 ) {
     // Equivale a UTPDatabaseHelper.validarUsuario, pero devuelve el usuario completo
     @PostMapping("/login")
@@ -33,7 +35,11 @@ class AuthController(
         if (usuario == null || !encoder.matches(req.password.trim(), usuario.passwordHash)) {
             throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas")
         }
-        return LoginResponse(usuario.id!!, usuario.nombre, usuario.email, usuario.rol)
+        val emitido = tokens.emitir(usuario)
+        return LoginResponse(
+            usuario.id!!, usuario.nombre, usuario.email, usuario.rol,
+            emitido.token, emitido.expiraEn.toEpochMilli()
+        )
     }
 }
 

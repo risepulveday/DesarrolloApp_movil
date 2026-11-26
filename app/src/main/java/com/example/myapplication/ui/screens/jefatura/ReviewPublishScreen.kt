@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.myapplication.ui.components.MaterialManager
 import com.example.myapplication.ui.components.UtpTopHeaderBar
 import com.example.myapplication.ui.theme.*
 
@@ -98,6 +99,9 @@ fun ReviewPublishScreen(
                         )
                     }
                 }
+
+                // Autorizar o rechazar el material de los docentes, y subir material propio
+                item { MaterialManager(rol = "JEFATURA") }
 
                 items(listaUnidades) { unidad ->
                     val isPending = unidad.estado == "PENDIENTE"

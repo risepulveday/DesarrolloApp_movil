@@ -1,20 +1,37 @@
 {
   "info": {
-    "name": "UTP Backend (Spring Boot)",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "name": "UTP Backend (Spring Boot + MySQL + JWT)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "1) Ejecuta los 3 logins (guardan el token). 2) Prueba el resto. En 'Subir material' elige un archivo en el campo 'archivo'."
   },
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:8080"
+    },
+    {
+      "key": "tokenAlumno",
+      "value": ""
+    },
+    {
+      "key": "tokenDocente",
+      "value": ""
+    },
+    {
+      "key": "tokenJefatura",
+      "value": ""
+    },
+    {
+      "key": "recursoId",
+      "value": "1"
     }
   ],
   "item": [
     {
-      "name": "Auth",
+      "name": "1. Autenticación",
       "item": [
         {
-          "name": "Login jefatura",
+          "name": "Login alumno",
           "request": {
             "method": "POST",
             "header": [
@@ -24,26 +41,26 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
+              "raw": "{{baseUrl}}/api/auth/login"
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"jefatura@utp.edu\",\n  \"password\": \"123456\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
+              "raw": "{\n  \"email\": \"alumno@utp.edu\",\n  \"password\": \"123456\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200',()=>pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.collectionVariables.set('tokenAlumno', j.token);"
+                ]
               }
             }
-          }
+          ]
         },
         {
           "name": "Login docente",
@@ -56,29 +73,29 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
+              "raw": "{{baseUrl}}/api/auth/login"
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"docente@utp.edu\",\n  \"password\": \"123456\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
+              "raw": "{\n  \"email\": \"docente@utp.edu\",\n  \"password\": \"123456\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200',()=>pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.collectionVariables.set('tokenDocente', j.token);"
+                ]
               }
             }
-          }
+          ]
         },
         {
-          "name": "Login alumno",
+          "name": "Login jefatura (UTP)",
           "request": {
             "method": "POST",
             "header": [
@@ -88,26 +105,26 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
+              "raw": "{{baseUrl}}/api/auth/login"
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"alumno@utp.edu\",\n  \"password\": \"123456\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
+              "raw": "{\n  \"email\": \"jefatura@utp.edu\",\n  \"password\": \"123456\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200',()=>pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.collectionVariables.set('tokenJefatura', j.token);"
+                ]
               }
             }
-          }
+          ]
         },
         {
           "name": "Login inválido (espera 401)",
@@ -120,70 +137,28 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
+              "raw": "{{baseUrl}}/api/auth/login"
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"alumno@utp.edu\",\n  \"password\": \"mala\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Panel",
-      "item": [
-        {
-          "name": "Listar tareas (alumno)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/tareas",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "tareas"
-              ]
+              "raw": "{\n  \"email\": \"x@x.cl\",\n  \"password\": \"mal\"\n}"
             }
           }
         },
         {
-          "name": "Listar clases (docente)",
+          "name": "Sin token (espera 401)",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/clases",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "clases"
-              ]
+              "raw": "{{baseUrl}}/api/unidades"
             }
           }
         }
       ]
     },
     {
-      "name": "Unidades",
+      "name": "2. Unidades",
       "item": [
         {
           "name": "Listar unidades",
@@ -191,67 +166,22 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/unidades",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "unidades"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Filtrar por asignatura y estado",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/unidades?asignatura=MATEMATICAS&estado=APROBADO",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "unidades"
-              ],
-              "query": [
+              "raw": "{{baseUrl}}/api/unidades"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                  "key": "asignatura",
-                  "value": "MATEMATICAS",
-                  "disabled": true
-                },
-                {
-                  "key": "estado",
-                  "value": "APROBADO",
-                  "disabled": true
+                  "key": "token",
+                  "value": "{{tokenAlumno}}",
+                  "type": "string"
                 }
               ]
-            },
-            "description": "Activa los parámetros en la pestaña Params. Asignaturas: LENGUAJE, MATEMATICAS, CIENCIAS, HISTORIA. Estados: BORRADOR, PENDIENTE, APROBADO, RECHAZADO, PUBLICADO, DESHABILITADO."
-          }
-        },
-        {
-          "name": "Obtener unidad por id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/unidades/1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "unidades",
-                "1"
-              ]
             }
           }
         },
         {
-          "name": "Crear unidad",
+          "name": "Crear unidad (docente)",
           "request": {
             "method": "POST",
             "header": [
@@ -261,61 +191,26 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/unidades",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "unidades"
+              "raw": "{{baseUrl}}/api/unidades"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenDocente}}",
+                  "type": "string"
+                }
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"asignatura\": \"LENGUAJE\",\n  \"numero\": 2,\n  \"titulo\": \"Lectura de sílabas\",\n  \"descripcion\": \"Reconocimiento de sílabas directas.\",\n  \"estado\": \"PENDIENTE\",\n  \"modificadoPor\": \"Docente 1° Básico\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"asignatura\": \"MATEMATICAS\",\n  \"numero\": 9,\n  \"titulo\": \"Unidad nueva\",\n  \"descripcion\": \"Prueba\",\n  \"estado\": \"PENDIENTE\",\n  \"modificadoPor\": \"Docente\"\n}"
             }
           }
         },
         {
-          "name": "Aprobar unidad (PATCH)",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/unidades/1/estado",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "unidades",
-                "1",
-                "estado"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"APROBADO\",\n  \"observaciones\": \"Cumple con los objetivos\",\n  \"usuario\": \"Jefatura UTP\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Rechazar unidad (PUT)",
+          "name": "Aprobar unidad (jefatura)",
           "request": {
             "method": "PUT",
             "header": [
@@ -325,70 +220,548 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/unidades/1/estado",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "unidades",
-                "1",
-                "estado"
+              "raw": "{{baseUrl}}/api/unidades/1/estado"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenJefatura}}",
+                  "type": "string"
+                }
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"estado\": \"RECHAZADO\",\n  \"observaciones\": \"Falta detallar actividades\",\n  \"usuario\": \"Jefatura UTP\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
+              "raw": "{\n  \"estado\": \"APROBADO\",\n  \"observaciones\": \"OK\",\n  \"usuario\": \"Jefe UTP\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Aprobar unidad como alumno (espera 403)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/unidades/1/estado"
             },
-            "description": "PUT y PATCH hacen lo mismo; la app Android usa PUT."
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAlumno}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"APROBADO\",\n  \"observaciones\": \"\",\n  \"usuario\": \"x\"\n}"
+            }
           }
         }
       ]
     },
     {
-      "name": "Historial",
+      "name": "3. Material",
       "item": [
         {
-          "name": "Historial completo",
+          "name": "Subir material (docente → PENDIENTE)",
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/historial",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "historial"
+              "raw": "{{baseUrl}}/api/recursos"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenDocente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "titulo",
+                  "value": "Guía de sumas",
+                  "type": "text"
+                },
+                {
+                  "key": "descripcion",
+                  "value": "Ejercicios",
+                  "type": "text"
+                },
+                {
+                  "key": "asignatura",
+                  "value": "MATEMATICAS",
+                  "type": "text"
+                },
+                {
+                  "key": "unidadId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": []
+                }
               ]
             }
           }
         },
         {
-          "name": "Historial de una unidad",
+          "name": "Subir material (jefatura → APROBADO)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recursos"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenJefatura}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "titulo",
+                  "value": "Guía de sumas",
+                  "type": "text"
+                },
+                {
+                  "key": "descripcion",
+                  "value": "Ejercicios",
+                  "type": "text"
+                },
+                {
+                  "key": "asignatura",
+                  "value": "MATEMATICAS",
+                  "type": "text"
+                },
+                {
+                  "key": "unidadId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar material (docente: el suyo)",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/historial?entidadId=1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "historial"
-              ],
-              "query": [
+              "raw": "{{baseUrl}}/api/recursos"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                  "key": "entidadId",
-                  "value": "1",
-                  "disabled": true
+                  "key": "token",
+                  "value": "{{tokenDocente}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar pendientes (jefatura)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recursos?estado=PENDIENTE"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenJefatura}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Autorizar material (jefatura)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/recursos/{{recursoId}}/estado"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenJefatura}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"APROBADO\",\n  \"observaciones\": \"\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Rechazar material (jefatura)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/recursos/{{recursoId}}/estado"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenJefatura}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RECHAZADO\",\n  \"observaciones\": \"Falta calidad\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Listar material autorizado (alumno)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recursos"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAlumno}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Descargar archivo (alumno)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recursos/{{recursoId}}/archivo"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAlumno}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Docente intenta autorizar (espera 403)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/recursos/{{recursoId}}/estado"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenDocente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"APROBADO\",\n  \"observaciones\": \"\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Avance y evaluaciones",
+      "item": [
+        {
+          "name": "Mi avance (alumno)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/progreso/mio"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAlumno}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Marcar material como visto",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/progreso/recursos/{{recursoId}}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAlumno}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Preguntas de la unidad 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/evaluaciones/1/preguntas"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAlumno}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Responder evaluación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/evaluaciones/1/responder"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAlumno}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"respuestas\": [\n    {\n      \"preguntaId\": 1,\n      \"opcion\": 0\n    },\n    {\n      \"preguntaId\": 2,\n      \"opcion\": 0\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Mis resultados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/evaluaciones/mis-resultados"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAlumno}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear pregunta (docente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/unidades/1/preguntas"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenDocente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enunciado\": \"¿2+2?\",\n  \"opciones\": [\n    \"3\",\n    \"4\",\n    \"5\"\n  ],\n  \"correcta\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Avance de todos los alumnos (docente)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/progreso/alumnos"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenDocente}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Panel",
+      "item": [
+        {
+          "name": "Tareas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tareas"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAlumno}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Clases",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clases"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenDocente}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Historial",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/historial"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenJefatura}}",
+                  "type": "string"
                 }
               ]
             }

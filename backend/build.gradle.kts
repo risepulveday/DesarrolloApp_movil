@@ -18,21 +18,31 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    // Solo BCrypt para hashear contraseñas (sin activar Spring Security completo)
-    implementation("org.springframework.security:spring-security-crypto")
+    // Seguridad: BCrypt + validación de tokens JWT (Nimbus viene con el resource server)
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.security:spring-security-oauth2-resource-server")
+    implementation("org.springframework.security:spring-security-oauth2-jose")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-    // Base de datos de desarrollo (en archivo). Para producción cambiar por PostgreSQL/MySQL.
-    runtimeOnly("com.h2database:h2")
+    // Base de datos MySQL
+    runtimeOnly("com.mysql:mysql-connector-j")
 
+    // H2 solo para los tests (así no necesitan MySQL levantado)
+    testRuntimeOnly("com.h2database:h2")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
 kotlin {
     compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
     }
 }

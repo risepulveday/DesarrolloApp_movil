@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Permite abrir el material descargado (carpeta interna "material") con otras apps como el visor de PDF -->
+<paths>
+    <files-path name="material" path="material/" />
+</paths>

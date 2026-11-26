@@ -4,6 +4,8 @@ import com.example.backend.domain.AsignaturaUTP
 import com.example.backend.domain.Clase
 import com.example.backend.domain.ClaseRepository
 import com.example.backend.domain.EstadoContenido
+import com.example.backend.domain.Pregunta
+import com.example.backend.domain.PreguntaRepository
 import com.example.backend.domain.Rol
 import com.example.backend.domain.Tarea
 import com.example.backend.domain.TareaRepository
@@ -25,6 +27,7 @@ class DataSeeder(
     private val tareas: TareaRepository,
     private val clases: ClaseRepository,
     private val unidades: UnidadRepository,
+    private val preguntas: PreguntaRepository,
     private val encoder: PasswordEncoder
 ) : CommandLineRunner {
 
@@ -84,6 +87,32 @@ class DataSeeder(
                     )
                 )
             )
+        }
+
+        // Evaluación de ejemplo: 2 preguntas por unidad
+        if (preguntas.count() == 0L) {
+            unidades.findAll().forEach { u ->
+                preguntas.saveAll(
+                    when (u.asignatura) {
+                        AsignaturaUTP.LENGUAJE -> listOf(
+                            Pregunta(u.id!!, "¿Con qué vocal comienza la palabra \"árbol\"?", mutableListOf("A", "E", "O"), 0),
+                            Pregunta(u.id!!, "¿Cuántas vocales tiene la palabra \"sol\"?", mutableListOf("0", "1", "2"), 1)
+                        )
+                        AsignaturaUTP.MATEMATICAS -> listOf(
+                            Pregunta(u.id!!, "¿Cuánto es 3 + 4?", mutableListOf("6", "7", "8"), 1),
+                            Pregunta(u.id!!, "¿Qué número viene después del 19?", mutableListOf("18", "20", "21"), 1)
+                        )
+                        AsignaturaUTP.CIENCIAS -> listOf(
+                            Pregunta(u.id!!, "¿Con qué sentido percibimos los sonidos?", mutableListOf("Vista", "Oído", "Gusto"), 1),
+                            Pregunta(u.id!!, "¿Qué órgano usamos para ver?", mutableListOf("Los ojos", "Las manos", "La nariz"), 0)
+                        )
+                        AsignaturaUTP.HISTORIA -> listOf(
+                            Pregunta(u.id!!, "¿Cuántos días tiene una semana?", mutableListOf("5", "7", "10"), 1),
+                            Pregunta(u.id!!, "¿Qué día viene después del lunes?", mutableListOf("Martes", "Domingo", "Viernes"), 0)
+                        )
+                    }
+                )
+            }
         }
     }
 }

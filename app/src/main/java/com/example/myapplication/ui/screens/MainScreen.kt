@@ -16,6 +16,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.myapplication.data.model.EstudianteAvance
+import com.example.myapplication.data.remote.Session
 
 import com.example.myapplication.ui.screens.jefatura.*
 import com.example.myapplication.ui.screens.student.*
@@ -77,6 +78,14 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // NAVEGACIÓN SEGURA: cada rol solo puede estar en sus propias pantallas.
+    // Si por cualquier motivo se llega a una pantalla de otro rol, se vuelve al inicio del rol de la sesión.
+    LaunchedEffect(currentRoute, userRole) {
+        if (currentRoute != null && !rutaPermitida(userRole, currentRoute)) {
+            navController.navigate(startRoute) { popUpTo(0) { inclusive = true } }
+        }
+    }
+
     val esPantallaSecundaria = currentRoute?.startsWith("solicitudes_materia") == true ||
             currentRoute?.startsWith("student_report") == true ||
             currentRoute == "unit_editor" ||
@@ -86,7 +95,7 @@ fun MainScreen(
             currentRoute == "student_search" ||
             currentRoute == "teacher_request" ||
             currentRoute == "student_practice" ||
-            currentRoute == "student_quiz"
+            currentRoute?.startsWith("student_quiz") == true
 
     Scaffold(
         bottomBar = {
@@ -271,9 +280,9 @@ fun MainScreen(
             }
 
             composable(NavTabItem.StudentContenido.route) {
-                StudentUnitDetailScreen(
+                StudentMaterialScreen(
                     onBack = { navController.popBackStack() },
-                    onStartQuiz = { navController.navigate("student_quiz") },
+                    onStartQuiz = { id -> navController.navigate("student_quiz/$id") },
                     onLogout = onLogout
                 )
             }
@@ -295,21 +304,30 @@ fun MainScreen(
             // --- VISTAS SECUNDARIAS ALUMNO ---
             composable("student_practice") {
                 StudentPracticeScreen(
-                    onComplete = { navController.navigate("student_quiz") },
+                    onComplete = { navController.popBackStack() },
                     onBack = { navController.popBackStack() }
                 )
             }
 
-            composable("student_quiz") {
-                StudentQuizScreen(
+            composable("student_quiz/{unidadId}") { entry ->
+                val unidadId = entry.arguments?.getString("unidadId")?.toLongOrNull() ?: 0L
+                StudentEvaluacionScreen(
+                    unidadId = unidadId,
                     onBack = { navController.popBackStack() },
-                    onFinishQuiz = {
-                        navController.navigate(NavTabItem.StudentInicio.route) {
-                            popUpTo(NavTabItem.StudentInicio.route) { inclusive = true }
-                        }
-                    }
+                    onLogout = onLogout
                 )
             }
         }
     }
+}
+
+/** Pantallas que puede ver cada rol. */
+private fun rutaPermitida(rol: String, ruta: String): Boolean {
+    val permitidas: List<String> = when (rol.uppercase()) {
+        "ALUMNO" -> listOf("student_home", "student_content", "student_grades", "student_schedule", "student_practice", "student_quiz")
+        "DOCENTE" -> listOf("teacher_", "assign_objectives", "student_report", "student_search")
+        "JEFATURA" -> listOf("utp_", "admin_subjects", "review_publish", "unit_editor", "jefatura_settings", "solicitudes_materia")
+        else -> emptyList()
+    }
+    return permitidas.any { ruta.startsWith(it) }
 }

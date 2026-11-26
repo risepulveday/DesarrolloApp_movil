@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.data.model.ContenidoBiblioteca
 import com.example.myapplication.data.repository.TeacherRepository
+import com.example.myapplication.ui.components.MaterialManager
 import com.example.myapplication.ui.components.UtpTopHeaderBar
 import com.example.myapplication.ui.theme.*
 
@@ -159,6 +160,9 @@ fun TeacherLibraryScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item { Spacer(modifier = Modifier.height(10.dp)) }
+
+                // Subir material (PDF, imágenes...) para que Jefatura UTP lo autorice
+                item { MaterialManager(rol = "DOCENTE") }
 
                 item {
                     Column {
