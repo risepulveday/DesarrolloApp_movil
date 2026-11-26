@@ -16,6 +16,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.myapplication.data.model.EstudianteAvance
+import com.example.myapplication.data.remote.Session
 
 import com.example.myapplication.ui.screens.jefatura.*
 import com.example.myapplication.ui.screens.student.*
@@ -76,6 +77,14 @@ fun MainScreen(
     val startRoute = tabs.first().route
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    // NAVEGACIÓN SEGURA: cada rol solo puede estar en sus propias pantallas.
+    // Si por cualquier motivo se llega a una pantalla de otro rol, se vuelve al inicio del rol de la sesión.
+    LaunchedEffect(currentRoute, userRole) {
+        if (currentRoute != null && !rutaPermitida(userRole, currentRoute)) {
+            navController.navigate(startRoute) { popUpTo(0) { inclusive = true } }
+        }
+    }
 
     val esPantallaSecundaria = currentRoute?.startsWith("solicitudes_materia") == true ||
             currentRoute?.startsWith("student_report") == true ||
@@ -312,4 +321,15 @@ fun MainScreen(
             }
         }
     }
+}
+
+/** Pantallas que puede ver cada rol. */
+private fun rutaPermitida(rol: String, ruta: String): Boolean {
+    val permitidas: List<String> = when (rol.uppercase()) {
+        "ALUMNO" -> listOf("student_home", "student_content", "student_grades", "student_schedule", "student_practice", "student_quiz")
+        "DOCENTE" -> listOf("teacher_", "assign_objectives", "student_report", "student_search")
+        "JEFATURA" -> listOf("utp_", "admin_subjects", "review_publish", "unit_editor", "jefatura_settings", "solicitudes_materia")
+        else -> emptyList()
+    }
+    return permitidas.any { ruta.startsWith(it) }
 }
