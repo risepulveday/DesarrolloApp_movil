@@ -70,3 +70,9 @@ Queda en `http://localhost:8080`. Los tests usan H2 en memoria (no necesitan MyS
 - Objetivos de aprendizaje, actividades y pruebas finales siguen solo en la app.
 - Sin conexión el alumno ve y abre lo descargado, pero avance y evaluaciones requieren servidor.
 - Los archivos subidos quedan en disco (`STORAGE_DIR`), no dentro de MySQL (solo sus datos).
+inicio:
+export DB_USER="root"
+export DB_PASSWORD=""
+./gradlew bootRun
+
+"$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe" reverse tcp:8080 tcp:8080
